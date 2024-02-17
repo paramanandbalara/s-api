@@ -1,0 +1,73 @@
+name: Prod CD - main branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    name: Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+
+
+
+    - name: Disconnect API 1
+      continue-on-error: true
+      run: |
+        curl -q -X GET http://13.235.231.0:3100/startdeployment
+
+    - name: Sleep for 15 seconds - Await Disconnection
+      run: sleep 15s
+      shell: bash
+
+    - name: Deploy API 1
+      id: deploy_and_check_1
+      run: |
+        curl -q -X GET http://13.235.231.0:8090/cgi-bin/deploy.cgi
+      
+    - name: Check Status
+      if: steps.deploy_and_check_1.outputs.integration == 'failure'
+      run: |
+        echo ${{ steps.deploy_and_check_1.outputs.integration }}
+        curl -X POST -H 'Content-type: application/json' --data '{"text": "<!here> *Broken Deployment - API 1!!* :oh_no_sushi: \n> :octocat: *st-api* ```\n ${{ github.event.head_commit.message }}```" }' https://hooks.slack.com/services/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
+        exit 1
+
+    - name: Sleep for 10 seconds - Await Reconnection
+      run: sleep 10s
+      shell: bash
+
+
+
+
+    - name: Disconnect API 2
+      continue-on-error: true
+      run: |
+        curl -q -X GET http://3.109.115.42:3100/startdeployment
+
+    - name: Sleep for 15 seconds - Await Disconnection
+      run: sleep 15s
+      shell: bash
+
+    - name: Deploy API 2
+      id: deploy_and_check_2
+      run: |
+        curl -q -X GET http://3.109.115.42:8090/cgi-bin/deploy.cgi
+      
+    - name: Check Status
+      if: steps.deploy_and_check_2.outputs.integration == 'failure'
+      run: |
+        echo ${{ steps.deploy_and_check_2.outputs.integration }}
+        curl -X POST -H 'Content-type: application/json' --data '{"text": "<!here> *Broken Deployment - API 2!!* :oh_no_sushi: \n> :octocat: *st-api* ```\n ${{ github.event.head_commit.message }}```" }' https://hooks.slack.com/services/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
+        exit 1
+
+    - name: Sleep for 10 seconds - Await Reconnection
+      run: sleep 10s
+      shell: bash

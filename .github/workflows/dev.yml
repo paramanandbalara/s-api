@@ -1,0 +1,22 @@
+
+name: Dev CD
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build:
+
+    name: Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+    - name: curl
+      run: |
+        curl -q -X GET http://shyptrack-stagingapi.shypmax.com:8090/cgi-bin/deploy-api.cgi
